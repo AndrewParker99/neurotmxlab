@@ -29,19 +29,27 @@ interface NormsFile {
 
 const PARENT_0_5 = parent0_5 as unknown as NormsFile;
 
-/** Convierte edad en meses totales a la llave de banda "años:meses" (o "años:m1-m2") usada en la Tabla A.1 (0-5). */
+/** Convierte una llave de banda ("2:3" o "2:3-2:5") al rango [minMeses, maxMeses] que cubre. */
+function bandKeyToMonthsRange(key: string): [number, number] {
+  const parts = key.split("-");
+  const toMonths = (p: string) => {
+    const [y, m] = p.split(":").map(Number);
+    return y * 12 + m;
+  };
+  const min = toMonths(parts[0]);
+  const max = parts.length > 1 ? toMonths(parts[1]) : min;
+  return [min, max];
+}
+
+/** Encuentra, entre las bandas ya digitalizadas, la que contiene la edad dada en meses totales. */
 export function monthsToBandKey(totalMonths: number): string {
+  for (const key of Object.keys(PARENT_0_5.ageBands)) {
+    const [min, max] = bandKeyToMonthsRange(key);
+    if (totalMonths >= min && totalMonths <= max) return key;
+  }
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
-  const singleKey = `${years}:${months}`;
-  if (PARENT_0_5.ageBands[singleKey]) return singleKey;
-
-  // A partir del año 1, las bandas digitalizadas son bimestrales: "1:0-1:1", "1:2-1:3", ...
-  const pairStart = months % 2 === 0 ? months : months - 1;
-  const pairKey = `${years}:${pairStart}-${years}:${pairStart + 1}`;
-  if (PARENT_0_5.ageBands[pairKey]) return pairKey;
-
-  return singleKey;
+  return `${years}:${months}`;
 }
 
 export function areasForBand(bandKey: string): AreaCode[] {
