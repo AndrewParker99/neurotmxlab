@@ -76,8 +76,8 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-50 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
         <div className="mb-6">
-          <p className="text-xs font-semibold text-amber-600 bg-amber-50 inline-block px-2 py-1 rounded">
-            VISTA PREVIA — solo bandas de edad 0:0 a 5:11 (Tabla A.1) y 0:0-0:3 (Tabla A.2) digitalizadas hasta ahora
+          <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 inline-block px-2 py-1 rounded">
+            Formulario Padres/Cuidador (0-5 años): Tabla A.1 y Tabla A.2 completas (0:0 a 5:11)
           </p>
           <h1 className="text-2xl font-bold text-zinc-900 mt-3">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
           <p className="text-zinc-500 text-sm mt-1">Formulario Padres/Cuidador principal (Ages 0–5)</p>
