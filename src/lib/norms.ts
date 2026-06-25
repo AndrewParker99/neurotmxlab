@@ -2,7 +2,7 @@ import parent0_5 from "@/data/norms/parent_0_5.json";
 import parent0_5Indices from "@/data/norms/parent_0_5_indices.json";
 import parent5_21 from "@/data/norms/parent_5_21.json";
 
-export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO";
+export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO" | "WK";
 
 export const AREA_LABELS: Record<AreaCode, string> = {
   Com: "Comunicación",
@@ -15,6 +15,7 @@ export const AREA_LABELS: Record<AreaCode, string> = {
   SD: "Autodirección",
   Soc: "Social",
   MO: "Motor",
+  WK: "Trabajo",
 };
 
 type AgeBandTable = Partial<Record<AreaCode, string[]>> & {
@@ -178,7 +179,7 @@ function domainAreas(domain: Exclude<DomainCode, "GAC">, areas: AreaCode[]): Are
     case "SO":
       return (["LS", "Soc"] as AreaCode[]).filter(has);
     case "PR":
-      return (["CU", "HL", "HS", "SC"] as AreaCode[]).filter(has);
+      return (["CU", "HL", "HS", "SC", "WK"] as AreaCode[]).filter(has);
   }
 }
 
