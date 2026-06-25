@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import {
   AREA_LABELS,
-  PARENT_FORM_AREAS,
   PARENT_FORM_META,
+  areasForBand,
   monthsToBandKey,
   rawToScaled,
   type AreaCode,
@@ -16,21 +16,20 @@ export default function Home() {
   const [years, setYears] = useState(0);
   const [months, setMonths] = useState(6);
   const [respondent, setRespondent] = useState("Padre/Madre/Cuidador principal");
-  const [raw, setRaw] = useState<Record<AreaCode, string>>({
-    Com: "", HS: "", LS: "", SC: "", SD: "", Soc: "", MO: "",
-  });
+  const [raw, setRaw] = useState<Partial<Record<AreaCode, string>>>({});
 
   const totalMonths = years * 12 + months;
   const bandKey = monthsToBandKey(totalMonths);
+  const areas = useMemo(() => areasForBand(bandKey), [bandKey]);
 
   const results = useMemo(() => {
-    return PARENT_FORM_AREAS.map((area) => {
-      const rawVal = parseInt(raw[area], 10);
+    return areas.map((area) => {
+      const rawVal = parseInt(raw[area] ?? "", 10);
       if (isNaN(rawVal)) return { area, scaled: null, note: undefined as string | undefined, tableUsed: "" };
       const r = rawToScaled(area, rawVal, totalMonths);
       return { area, scaled: r.scaled, note: r.note, tableUsed: r.tableUsed };
     });
-  }, [raw, totalMonths]);
+  }, [areas, raw, totalMonths]);
 
   const chartPoints = results.map((r) => ({
     label: AREA_LABELS[r.area],
@@ -45,7 +44,7 @@ export default function Home() {
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
         <div className="mb-6">
           <p className="text-xs font-semibold text-amber-600 bg-amber-50 inline-block px-2 py-1 rounded">
-            VISTA PREVIA — solo bandas de edad 0:0 a 0:9 digitalizadas y verificadas hasta ahora
+            VISTA PREVIA — solo bandas de edad 0:0 a 1:3 digitalizadas y verificadas hasta ahora
           </p>
           <h1 className="text-2xl font-bold text-zinc-900 mt-3">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
           <p className="text-zinc-500 text-sm mt-1">Formulario Padres/Cuidador principal (Ages 0–5)</p>
@@ -55,7 +54,7 @@ export default function Home() {
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Nombre del paciente</label>
             <input
-              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nombre completo"
@@ -64,7 +63,7 @@ export default function Home() {
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">¿Quién contesta la escala?</label>
             <select
-              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
               value={respondent}
               onChange={(e) => setRespondent(e.target.value)}
             >
@@ -80,7 +79,7 @@ export default function Home() {
               type="number"
               min={0}
               max={5}
-              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
               value={years}
               onChange={(e) => setYears(parseInt(e.target.value || "0", 10))}
             />
@@ -91,7 +90,7 @@ export default function Home() {
               type="number"
               min={0}
               max={11}
-              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
               value={months}
               onChange={(e) => setMonths(parseInt(e.target.value || "0", 10))}
             />
@@ -103,7 +102,7 @@ export default function Home() {
             Banda de edad seleccionada: <span className="font-mono font-semibold">{bandKey}</span>
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {PARENT_FORM_AREAS.map((area) => (
+            {areas.map((area) => (
               <div key={area}>
                 <label className="block text-xs font-medium text-zinc-600 mb-1">
                   {AREA_LABELS[area]} ({area}) · PD
@@ -111,8 +110,8 @@ export default function Home() {
                 <input
                   type="number"
                   min={0}
-                  className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
-                  value={raw[area]}
+                  className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm bg-white text-zinc-900"
+                  value={raw[area] ?? ""}
                   onChange={(e) => setRaw((prev) => ({ ...prev, [area]: e.target.value }))}
                 />
               </div>
