@@ -2,8 +2,9 @@ import parent0_5 from "@/data/norms/parent_0_5.json";
 import parent0_5Indices from "@/data/norms/parent_0_5_indices.json";
 import parent5_21Indices from "@/data/norms/parent_5_21_indices.json";
 import parent5_21 from "@/data/norms/parent_5_21.json";
+import teacher2_5 from "@/data/norms/teacher_2_5.json";
 
-export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO" | "WK";
+export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO" | "WK" | "SL";
 
 export const AREA_LABELS: Record<AreaCode, string> = {
   Com: "Comunicación",
@@ -17,6 +18,7 @@ export const AREA_LABELS: Record<AreaCode, string> = {
   Soc: "Social",
   MO: "Motor",
   WK: "Trabajo",
+  SL: "Vida escolar",
 };
 
 type AgeBandTable = Partial<Record<AreaCode, string[]>> & {
@@ -37,16 +39,18 @@ interface IndicesFile {
   ageBands: Record<string, { verified?: boolean; ss: number[] } & Record<string, string[] | number[] | boolean | undefined>>;
 }
 
-export type FormId = "parent_0_5" | "parent_5_21";
+export type FormId = "parent_0_5" | "parent_5_21" | "teacher_2_5";
 
 export const FORM_LABELS: Record<FormId, string> = {
   parent_0_5: "Padre/Madre/Cuidador principal (0-5 años)",
   parent_5_21: "Padre/Madre (Escolar, 5-21 años)",
+  teacher_2_5: "Maestro/Cuidador diurno (2-5 años)",
 };
 
 const NORMS_BY_FORM: Record<FormId, NormsFile> = {
   parent_0_5: parent0_5 as unknown as NormsFile,
   parent_5_21: parent5_21 as unknown as NormsFile,
+  teacher_2_5: teacher2_5 as unknown as NormsFile,
 };
 
 const INDICES_BY_FORM: Partial<Record<FormId, IndicesFile>> = {
@@ -181,7 +185,7 @@ function domainAreas(domain: Exclude<DomainCode, "GAC">, areas: AreaCode[]): Are
     case "SO":
       return (["LS", "Soc"] as AreaCode[]).filter(has);
     case "PR":
-      return (["CU", "HL", "HS", "SC", "WK"] as AreaCode[]).filter(has);
+      return (["CU", "HL", "SL", "HS", "SC", "WK"] as AreaCode[]).filter(has);
   }
 }
 
