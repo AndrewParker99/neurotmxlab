@@ -4,6 +4,7 @@ import parent5_21Indices from "@/data/norms/parent_5_21_indices.json";
 import parent5_21 from "@/data/norms/parent_5_21.json";
 import teacher2_5 from "@/data/norms/teacher_2_5.json";
 import teacher2_5Indices from "@/data/norms/teacher_2_5_indices.json";
+import teacher5_21 from "@/data/norms/teacher_5_21.json";
 
 export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO" | "WK" | "SL";
 
@@ -40,18 +41,20 @@ interface IndicesFile {
   ageBands: Record<string, { verified?: boolean; ss: number[] } & Record<string, string[] | number[] | boolean | undefined>>;
 }
 
-export type FormId = "parent_0_5" | "parent_5_21" | "teacher_2_5";
+export type FormId = "parent_0_5" | "parent_5_21" | "teacher_2_5" | "teacher_5_21";
 
 export const FORM_LABELS: Record<FormId, string> = {
   parent_0_5: "Padre/Madre/Cuidador principal (0-5 años)",
   parent_5_21: "Padre/Madre (Escolar, 5-21 años)",
   teacher_2_5: "Maestro/Cuidador diurno (2-5 años)",
+  teacher_5_21: "Maestro Escolar (5-21 años)",
 };
 
 const NORMS_BY_FORM: Record<FormId, NormsFile> = {
   parent_0_5: parent0_5 as unknown as NormsFile,
   parent_5_21: parent5_21 as unknown as NormsFile,
   teacher_2_5: teacher2_5 as unknown as NormsFile,
+  teacher_5_21: teacher5_21 as unknown as NormsFile,
 };
 
 const INDICES_BY_FORM: Partial<Record<FormId, IndicesFile>> = {
