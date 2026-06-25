@@ -3,13 +3,20 @@
 import { useMemo, useState } from "react";
 import {
   AREA_LABELS,
+  DOMAIN_LABELS,
   PARENT_FORM_META,
   areasForBand,
+  areasForDomain,
   monthsToBandKey,
   rawToScaled,
+  sumToStandardScore,
   type AreaCode,
+  type DomainCode,
 } from "@/lib/norms";
 import ProfileChart from "@/components/ProfileChart";
+import IndicesChart from "@/components/IndicesChart";
+
+const DOMAINS: DomainCode[] = ["CON", "SO", "PR", "GAC"];
 
 export default function Home() {
   const [name, setName] = useState("");
@@ -31,20 +38,46 @@ export default function Home() {
     });
   }, [areas, raw, totalMonths]);
 
+  const scaledByArea = useMemo(() => {
+    const map: Partial<Record<AreaCode, number>> = {};
+    for (const r of results) if (r.scaled !== null) map[r.area] = r.scaled;
+    return map;
+  }, [results]);
+
+  const indexResults = useMemo(() => {
+    return DOMAINS.map((domain) => {
+      const domainAreaList = areasForDomain(domain, bandKey);
+      const values = domainAreaList.map((a) => scaledByArea[a]);
+      if (domainAreaList.length === 0 || values.some((v) => v === undefined)) {
+        return { domain, standard: null, note: undefined as string | undefined, tableUsed: "", areasUsed: domainAreaList };
+      }
+      const sum = (values as number[]).reduce((acc, v) => acc + v, 0);
+      const r = sumToStandardScore(domain, sum, totalMonths);
+      return { domain, standard: r.standard, note: r.note, tableUsed: r.tableUsed, areasUsed: domainAreaList, sum };
+    });
+  }, [bandKey, scaledByArea, totalMonths]);
+
   const chartPoints = results.map((r) => ({
     label: AREA_LABELS[r.area],
     code: r.area,
     scaled: r.scaled,
   }));
 
+  const indexChartPoints = indexResults.map((r) => ({
+    label: DOMAIN_LABELS[r.domain],
+    code: r.domain,
+    standard: r.standard,
+  }));
+
   const tableUsed = results.find((r) => r.tableUsed)?.tableUsed || `${PARENT_FORM_META.form} — Ages ${bandKey}`;
+  const indexTableUsed = indexResults.find((r) => r.tableUsed)?.tableUsed;
 
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
         <div className="mb-6">
           <p className="text-xs font-semibold text-amber-600 bg-amber-50 inline-block px-2 py-1 rounded">
-            VISTA PREVIA — solo bandas de edad 0:0 a 1:3 digitalizadas y verificadas hasta ahora
+            VISTA PREVIA — solo bandas de edad 0:0 a 5:11 (Tabla A.1) y 0:0-0:3 (Tabla A.2) digitalizadas hasta ahora
           </p>
           <h1 className="text-2xl font-bold text-zinc-900 mt-3">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
           <p className="text-zinc-500 text-sm mt-1">Formulario Padres/Cuidador principal (Ages 0–5)</p>
@@ -123,12 +156,30 @@ export default function Home() {
           <ProfileChart points={chartPoints} title="Perfil por área (puntaje escalar, media=10, DE=3)" />
         </div>
 
-        <div className="mt-6 text-xs text-zinc-500 bg-zinc-50 border border-zinc-200 rounded-md p-3">
-          <strong>Tabla utilizada:</strong> {tableUsed}
-          {results.some((r) => r.note) && (
-            <ul className="mt-1 list-disc list-inside">
-              {results.filter((r) => r.note).map((r) => (
-                <li key={r.area}>{AREA_LABELS[r.area]}: {r.note}</li>
+        <div className="border-t border-zinc-200 pt-6 mt-6">
+          <IndicesChart points={indexChartPoints} title="Índices (puntaje típico, media=100, DE=15)" />
+        </div>
+
+        <div className="mt-6 text-xs text-zinc-500 bg-zinc-50 border border-zinc-200 rounded-md p-3 space-y-2">
+          <div>
+            <strong>Tabla A.1 utilizada:</strong> {tableUsed}
+            {results.some((r) => r.note) && (
+              <ul className="mt-1 list-disc list-inside">
+                {results.filter((r) => r.note).map((r) => (
+                  <li key={r.area}>{AREA_LABELS[r.area]}: {r.note}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {indexTableUsed && (
+            <div>
+              <strong>Tabla A.2 utilizada:</strong> {indexTableUsed}
+            </div>
+          )}
+          {indexResults.some((r) => r.note) && (
+            <ul className="list-disc list-inside">
+              {indexResults.filter((r) => r.note).map((r) => (
+                <li key={r.domain}>{DOMAIN_LABELS[r.domain]}: {r.note}</li>
               ))}
             </ul>
           )}
