@@ -1,5 +1,6 @@
 import parent0_5 from "@/data/norms/parent_0_5.json";
 import parent0_5Indices from "@/data/norms/parent_0_5_indices.json";
+import parent5_21 from "@/data/norms/parent_5_21.json";
 
 export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO";
 
@@ -28,7 +29,27 @@ interface NormsFile {
   ageBands: Record<string, AgeBandTable>;
 }
 
-const PARENT_0_5 = parent0_5 as unknown as NormsFile;
+interface IndicesFile {
+  form: string;
+  sourcePage: string;
+  ageBands: Record<string, { verified?: boolean; ss: number[] } & Record<string, string[] | number[] | boolean | undefined>>;
+}
+
+export type FormId = "parent_0_5" | "parent_5_21";
+
+export const FORM_LABELS: Record<FormId, string> = {
+  parent_0_5: "Padre/Madre/Cuidador principal (0-5 años)",
+  parent_5_21: "Padre/Madre (Escolar, 5-21 años)",
+};
+
+const NORMS_BY_FORM: Record<FormId, NormsFile> = {
+  parent_0_5: parent0_5 as unknown as NormsFile,
+  parent_5_21: parent5_21 as unknown as NormsFile,
+};
+
+const INDICES_BY_FORM: Partial<Record<FormId, IndicesFile>> = {
+  parent_0_5: parent0_5Indices as unknown as IndicesFile,
+};
 
 /** Convierte una llave de banda ("2:3" o "2:3-2:5") al rango [minMeses, maxMeses] que cubre. */
 function bandKeyToMonthsRange(key: string): [number, number] {
@@ -51,18 +72,25 @@ function findBandKey(ageBands: Record<string, unknown>, totalMonths: number): st
   return null;
 }
 
-/** Encuentra, entre las bandas de la Tabla A.1 ya digitalizadas, la que contiene la edad dada en meses totales. */
-export function monthsToBandKey(totalMonths: number): string {
-  const found = findBandKey(PARENT_0_5.ageBands, totalMonths);
+/** Encuentra, entre las bandas de la Tabla A.1/A.4 ya digitalizadas del formulario, la que contiene la edad dada en meses. */
+export function monthsToBandKey(formId: FormId, totalMonths: number): string {
+  const norms = NORMS_BY_FORM[formId];
+  const found = findBandKey(norms.ageBands, totalMonths);
   if (found) return found;
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
   return `${years}:${months}`;
 }
 
-export function areasForBand(bandKey: string): AreaCode[] {
-  const band = PARENT_0_5.ageBands[bandKey];
-  return band?.areas ?? PARENT_0_5.areas;
+export function areasForBand(formId: FormId, bandKey: string): AreaCode[] {
+  const norms = NORMS_BY_FORM[formId];
+  const band = norms.ageBands[bandKey];
+  return band?.areas ?? norms.areas;
+}
+
+export function formMeta(formId: FormId) {
+  const norms = NORMS_BY_FORM[formId];
+  return { form: norms.form, sourcePage: norms.sourcePage };
 }
 
 export interface ConversionResult {
@@ -82,12 +110,14 @@ function parseRange(cell: string): { min: number; max: number } | null {
 }
 
 export function rawToScaled(
+  formId: FormId,
   area: AreaCode,
   raw: number,
   totalMonths: number
 ): ConversionResult {
-  const bandKey = monthsToBandKey(totalMonths);
-  const band = PARENT_0_5.ageBands[bandKey];
+  const norms = NORMS_BY_FORM[formId];
+  const bandKey = monthsToBandKey(formId, totalMonths);
+  const band = norms.ageBands[bandKey];
 
   if (!band || !band[area]) {
     return {
@@ -95,7 +125,7 @@ export function rawToScaled(
       raw,
       area,
       bandKey,
-      tableUsed: PARENT_0_5.sourcePage,
+      tableUsed: norms.sourcePage,
       note: `Banda de edad "${bandKey}" (o el área ${area}) aún no digitalizada en esta vista previa.`,
     };
   }
@@ -104,7 +134,7 @@ export function rawToScaled(
   for (let ss = 1; ss <= 19; ss++) {
     const range = parseRange(column[ss - 1]);
     if (range && raw >= range.min && raw <= range.max) {
-      return { scaled: ss, raw, area, bandKey, tableUsed: `${PARENT_0_5.form} — ${PARENT_0_5.sourcePage} — Ages ${bandKey}` };
+      return { scaled: ss, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}` };
     }
   }
 
@@ -112,21 +142,18 @@ export function rawToScaled(
   const lastDefined = column.length - 1 - [...column].reverse().findIndex((c) => parseRange(c));
   const lastRange = parseRange(column[lastDefined]);
   if (lastRange && raw > lastRange.max) {
-    return { scaled: 19, raw, area, bandKey, tableUsed: `${PARENT_0_5.form} — ${PARENT_0_5.sourcePage} — Ages ${bandKey}`, note: "Por encima del techo tabulado, asignado 19." };
+    return { scaled: 19, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}`, note: "Por encima del techo tabulado, asignado 19." };
   }
   if (firstDefined >= 0) {
-    return { scaled: firstDefined + 1, raw, area, bandKey, tableUsed: `${PARENT_0_5.form} — ${PARENT_0_5.sourcePage} — Ages ${bandKey}`, note: "Por debajo del rango tabulado, asignado el escalar mínimo disponible." };
+    return { scaled: firstDefined + 1, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}`, note: "Por debajo del rango tabulado, asignado el escalar mínimo disponible." };
   }
 
-  return { scaled: null, raw, area, bandKey, tableUsed: PARENT_0_5.sourcePage, note: "Sin datos para esta combinación." };
+  return { scaled: null, raw, area, bandKey, tableUsed: norms.sourcePage, note: "Sin datos para esta combinación." };
 }
 
-export function getAvailableBands(): string[] {
-  return Object.keys(PARENT_0_5.ageBands);
+export function getAvailableBands(formId: FormId): string[] {
+  return Object.keys(NORMS_BY_FORM[formId].ageBands);
 }
-
-export const PARENT_FORM_AREAS = PARENT_0_5.areas;
-export const PARENT_FORM_META = { form: PARENT_0_5.form, sourcePage: PARENT_0_5.sourcePage };
 
 // --- Índices (Tabla A.2): CON, SO, PR, GAC ---
 
@@ -155,19 +182,11 @@ function domainAreas(domain: Exclude<DomainCode, "GAC">, areas: AreaCode[]): Are
   }
 }
 
-export function areasForDomain(domain: DomainCode, bandKey: string): AreaCode[] {
-  const areas = areasForBand(bandKey);
+export function areasForDomain(formId: FormId, domain: DomainCode, bandKey: string): AreaCode[] {
+  const areas = areasForBand(formId, bandKey);
   if (domain === "GAC") return areas;
   return domainAreas(domain, areas);
 }
-
-interface IndicesFile {
-  form: string;
-  sourcePage: string;
-  ageBands: Record<string, { verified?: boolean; ss: number[] } & Record<string, string[] | number[] | boolean | undefined>>;
-}
-
-const PARENT_0_5_INDICES = parent0_5Indices as unknown as IndicesFile;
 
 export interface IndexConversionResult {
   standard: number | null;
@@ -178,9 +197,22 @@ export interface IndexConversionResult {
   note?: string;
 }
 
-export function sumToStandardScore(domain: DomainCode, sum: number, totalMonths: number): IndexConversionResult {
-  const bandKey = findBandKey(PARENT_0_5_INDICES.ageBands, totalMonths) ?? monthsToBandKey(totalMonths);
-  const band = PARENT_0_5_INDICES.ageBands[bandKey];
+export function sumToStandardScore(formId: FormId, domain: DomainCode, sum: number, totalMonths: number): IndexConversionResult {
+  const indices = INDICES_BY_FORM[formId];
+  if (!indices) {
+    const bandKey = monthsToBandKey(formId, totalMonths);
+    return {
+      standard: null,
+      sum,
+      domain,
+      bandKey,
+      tableUsed: "",
+      note: `La Tabla de índices (A.2) para "${FORM_LABELS[formId]}" aún no ha sido digitalizada.`,
+    };
+  }
+
+  const bandKey = findBandKey(indices.ageBands, totalMonths) ?? monthsToBandKey(formId, totalMonths);
+  const band = indices.ageBands[bandKey];
 
   if (!band || !band[domain]) {
     return {
@@ -188,7 +220,7 @@ export function sumToStandardScore(domain: DomainCode, sum: number, totalMonths:
       sum,
       domain,
       bandKey,
-      tableUsed: PARENT_0_5_INDICES.sourcePage,
+      tableUsed: indices.sourcePage,
       note: `Tabla A.2 para la banda "${bandKey}" aún no digitalizada en esta vista previa.`,
     };
   }
@@ -198,7 +230,7 @@ export function sumToStandardScore(domain: DomainCode, sum: number, totalMonths:
   for (let i = 0; i < column.length; i++) {
     const range = parseRange(column[i]);
     if (range && sum >= range.min && sum <= range.max) {
-      return { standard: ssRow[i], sum, domain, bandKey, tableUsed: `${PARENT_0_5_INDICES.form} — ${PARENT_0_5_INDICES.sourcePage} — Ages ${bandKey}` };
+      return { standard: ssRow[i], sum, domain, bandKey, tableUsed: `${indices.form} — ${indices.sourcePage} — Ages ${bandKey}` };
     }
   }
 
@@ -206,11 +238,11 @@ export function sumToStandardScore(domain: DomainCode, sum: number, totalMonths:
   const lastDefinedIdx = column.length - 1 - [...column].reverse().findIndex((c) => parseRange(c));
   const lastRange = parseRange(column[lastDefinedIdx]);
   if (lastRange && sum > lastRange.max) {
-    return { standard: ssRow[lastDefinedIdx], sum, domain, bandKey, tableUsed: `${PARENT_0_5_INDICES.form} — ${PARENT_0_5_INDICES.sourcePage} — Ages ${bandKey}`, note: "Por encima del techo tabulado." };
+    return { standard: ssRow[lastDefinedIdx], sum, domain, bandKey, tableUsed: `${indices.form} — ${indices.sourcePage} — Ages ${bandKey}`, note: "Por encima del techo tabulado." };
   }
   if (firstDefined >= 0) {
-    return { standard: ssRow[firstDefined], sum, domain, bandKey, tableUsed: `${PARENT_0_5_INDICES.form} — ${PARENT_0_5_INDICES.sourcePage} — Ages ${bandKey}`, note: "Por debajo del rango tabulado." };
+    return { standard: ssRow[firstDefined], sum, domain, bandKey, tableUsed: `${indices.form} — ${indices.sourcePage} — Ages ${bandKey}`, note: "Por debajo del rango tabulado." };
   }
 
-  return { standard: null, sum, domain, bandKey, tableUsed: PARENT_0_5_INDICES.sourcePage, note: "Sin datos para esta combinación." };
+  return { standard: null, sum, domain, bandKey, tableUsed: indices.sourcePage, note: "Sin datos para esta combinación." };
 }

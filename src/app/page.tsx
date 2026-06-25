@@ -4,14 +4,16 @@ import { useMemo, useState } from "react";
 import {
   AREA_LABELS,
   DOMAIN_LABELS,
-  PARENT_FORM_META,
+  FORM_LABELS,
   areasForBand,
   areasForDomain,
+  formMeta,
   monthsToBandKey,
   rawToScaled,
   sumToStandardScore,
   type AreaCode,
   type DomainCode,
+  type FormId,
 } from "@/lib/norms";
 import ProfileChart from "@/components/ProfileChart";
 import IndicesChart from "@/components/IndicesChart";
@@ -22,21 +24,22 @@ export default function Home() {
   const [name, setName] = useState("");
   const [years, setYears] = useState(0);
   const [months, setMonths] = useState(6);
-  const [respondent, setRespondent] = useState("Padre/Madre/Cuidador principal");
+  const [formId, setFormId] = useState<FormId>("parent_0_5");
   const [raw, setRaw] = useState<Partial<Record<AreaCode, string>>>({});
 
   const totalMonths = years * 12 + months;
-  const bandKey = monthsToBandKey(totalMonths);
-  const areas = useMemo(() => areasForBand(bandKey), [bandKey]);
+  const bandKey = monthsToBandKey(formId, totalMonths);
+  const areas = useMemo(() => areasForBand(formId, bandKey), [formId, bandKey]);
+  const meta = formMeta(formId);
 
   const results = useMemo(() => {
     return areas.map((area) => {
       const rawVal = parseInt(raw[area] ?? "", 10);
       if (isNaN(rawVal)) return { area, scaled: null, note: undefined as string | undefined, tableUsed: "" };
-      const r = rawToScaled(area, rawVal, totalMonths);
+      const r = rawToScaled(formId, area, rawVal, totalMonths);
       return { area, scaled: r.scaled, note: r.note, tableUsed: r.tableUsed };
     });
-  }, [areas, raw, totalMonths]);
+  }, [formId, areas, raw, totalMonths]);
 
   const scaledByArea = useMemo(() => {
     const map: Partial<Record<AreaCode, number>> = {};
@@ -46,16 +49,16 @@ export default function Home() {
 
   const indexResults = useMemo(() => {
     return DOMAINS.map((domain) => {
-      const domainAreaList = areasForDomain(domain, bandKey);
+      const domainAreaList = areasForDomain(formId, domain, bandKey);
       const values = domainAreaList.map((a) => scaledByArea[a]);
       if (domainAreaList.length === 0 || values.some((v) => v === undefined)) {
         return { domain, standard: null, note: undefined as string | undefined, tableUsed: "", areasUsed: domainAreaList };
       }
       const sum = (values as number[]).reduce((acc, v) => acc + v, 0);
-      const r = sumToStandardScore(domain, sum, totalMonths);
+      const r = sumToStandardScore(formId, domain, sum, totalMonths);
       return { domain, standard: r.standard, note: r.note, tableUsed: r.tableUsed, areasUsed: domainAreaList, sum };
     });
-  }, [bandKey, scaledByArea, totalMonths]);
+  }, [formId, bandKey, scaledByArea, totalMonths]);
 
   const chartPoints = results.map((r) => ({
     label: AREA_LABELS[r.area],
@@ -69,7 +72,7 @@ export default function Home() {
     standard: r.standard,
   }));
 
-  const tableUsed = results.find((r) => r.tableUsed)?.tableUsed || `${PARENT_FORM_META.form} — Ages ${bandKey}`;
+  const tableUsed = results.find((r) => r.tableUsed)?.tableUsed || `${meta.form} — Ages ${bandKey}`;
   const indexTableUsed = indexResults.find((r) => r.tableUsed)?.tableUsed;
 
   return (
@@ -77,10 +80,10 @@ export default function Home() {
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
         <div className="mb-6">
           <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 inline-block px-2 py-1 rounded">
-            Formulario Padres/Cuidador (0-5 años): Tabla A.1 y Tabla A.2 completas (0:0 a 5:11)
+            Padres/Cuidador (0-5): Tablas A.1+A.2 completas · Padres Escolar (5-21): Tabla A.4 en progreso
           </p>
           <h1 className="text-2xl font-bold text-zinc-900 mt-3">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
-          <p className="text-zinc-500 text-sm mt-1">Formulario Padres/Cuidador principal (Ages 0–5)</p>
+          <p className="text-zinc-500 text-sm mt-1">{meta.form}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -97,10 +100,12 @@ export default function Home() {
             <label className="block text-sm font-medium text-zinc-700 mb-1">¿Quién contesta la escala?</label>
             <select
               className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
-              value={respondent}
-              onChange={(e) => setRespondent(e.target.value)}
+              value={formId}
+              onChange={(e) => setFormId(e.target.value as FormId)}
             >
-              <option>Padre/Madre/Cuidador principal</option>
+              {Object.entries(FORM_LABELS).map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
               <option disabled>Maestro/Cuidador diurno (pendiente de digitalizar)</option>
               <option disabled>Adulto — Autoinforme (pendiente de digitalizar)</option>
               <option disabled>Adulto — Otro informante (pendiente de digitalizar)</option>
@@ -111,7 +116,7 @@ export default function Home() {
             <input
               type="number"
               min={0}
-              max={5}
+              max={21}
               className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
               value={years}
               onChange={(e) => setYears(parseInt(e.target.value || "0", 10))}
@@ -162,7 +167,7 @@ export default function Home() {
 
         <div className="mt-6 text-xs text-zinc-500 bg-zinc-50 border border-zinc-200 rounded-md p-3 space-y-2">
           <div>
-            <strong>Tabla A.1 utilizada:</strong> {tableUsed}
+            <strong>Tabla utilizada:</strong> {tableUsed}
             {results.some((r) => r.note) && (
               <ul className="mt-1 list-disc list-inside">
                 {results.filter((r) => r.note).map((r) => (
