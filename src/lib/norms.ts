@@ -1,5 +1,6 @@
 import parent0_5 from "@/data/norms/parent_0_5.json";
 import parent0_5Indices from "@/data/norms/parent_0_5_indices.json";
+import parent5_21Indices from "@/data/norms/parent_5_21_indices.json";
 import parent5_21 from "@/data/norms/parent_5_21.json";
 
 export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO" | "WK";
@@ -50,6 +51,7 @@ const NORMS_BY_FORM: Record<FormId, NormsFile> = {
 
 const INDICES_BY_FORM: Partial<Record<FormId, IndicesFile>> = {
   parent_0_5: parent0_5Indices as unknown as IndicesFile,
+  parent_5_21: parent5_21Indices as unknown as IndicesFile,
 };
 
 /** Convierte una llave de banda ("2:3" o "2:3-2:5") al rango [minMeses, maxMeses] que cubre. */
