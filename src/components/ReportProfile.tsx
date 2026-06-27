@@ -34,23 +34,31 @@ interface ReportProfileProps {
 const ROW_H = 32;
 
 const SKILL_ZONES = [
-  { label: "Muy bajo / Bajo", from: 1, to: 4, color: "#f5d4a8" },
-  { label: "Promedio Bajo", from: 4, to: 6, color: "#c7e6cf" },
-  { label: "Promedio", from: 6, to: 13, color: "#6fb98a" },
-  { label: "Promedio Alto", from: 13, to: 15, color: "#c7e6cf" },
-  { label: "Alto / Muy alto", from: 15, to: 19, color: "#f5d4a8" },
+  { label: "Muy Baja", from: 1, to: 3, color: "#c9d6ec" },
+  { label: "Baja", from: 3, to: 5, color: "#9fb6dd" },
+  { label: "Media-baja", from: 5, to: 7, color: "#8fb89a" },
+  { label: "Media", from: 7, to: 13, color: "#6fa37e" },
+  { label: "Media-alta", from: 13, to: 15, color: "#e8d9a8" },
+  { label: "Alta", from: 15, to: 19, color: "#e3c46e" },
 ];
 
 const DOMAIN_ZONES = [
-  { label: "Muy bajo / Bajo", from: 40, to: 79, color: "#f5d4a8" },
-  { label: "Promedio Bajo", from: 79, to: 89, color: "#c7e6cf" },
-  { label: "Promedio", from: 89, to: 109, color: "#6fb98a" },
-  { label: "Promedio Alto", from: 109, to: 119, color: "#c7e6cf" },
-  { label: "Alto / Muy alto", from: 119, to: 130, color: "#f5d4a8" },
+  { label: "Muy Baja", from: 50, to: 70, color: "#c9d6ec" },
+  { label: "Baja", from: 70, to: 80, color: "#9fb6dd" },
+  { label: "Media-baja", from: 80, to: 90, color: "#8fb89a" },
+  { label: "Media", from: 90, to: 110, color: "#6fa37e" },
+  { label: "Media-alta", from: 110, to: 120, color: "#e8d9a8" },
+  { label: "Alta", from: 120, to: 130, color: "#e3c46e" },
+  { label: "Muy alta", from: 130, to: 150, color: "#cf9f4a" },
 ];
 
+const SKILL_MIN = 1;
+const SKILL_MAX = 19;
+const DOMAIN_MIN = 50;
+const DOMAIN_MAX = 150;
+
 const SKILL_TICKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
-const DOMAIN_TICKS = [40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130];
+const DOMAIN_TICKS = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150];
 
 function pctFor(min: number, max: number, value: number) {
   return ((value - min) / (max - min)) * 100;
@@ -166,13 +174,13 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
                     {SKILL_ZONES.map((z) => (
                       <div
                         key={z.label}
-                        style={{ width: `${pctFor(1, 19, z.to) - pctFor(1, 19, z.from)}%`, backgroundColor: z.color, opacity: 0.55 }}
+                        style={{ width: `${pctFor(SKILL_MIN, SKILL_MAX, z.to) - pctFor(SKILL_MIN, SKILL_MAX, z.from)}%`, backgroundColor: z.color, opacity: 0.55 }}
                       />
                     ))}
                   </div>
                   <div
                     className="absolute top-0 bottom-0 border-l border-dashed border-zinc-500"
-                    style={{ left: `${pctFor(1, 19, 10)}%` }}
+                    style={{ left: `${pctFor(SKILL_MIN, SKILL_MAX, 10)}%` }}
                   />
                 </div>
               </div>
@@ -190,7 +198,7 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
                     {s.pe !== null && (
                       <div
                         className="absolute rounded-full bg-zinc-900 border-2 border-white shadow"
-                        style={{ width: 10, height: 10, top: ROW_H / 2 - 5, left: `calc(${pctFor(1, 19, s.pe)}% - 5px)` }}
+                        style={{ width: 10, height: 10, top: ROW_H / 2 - 5, left: `calc(${pctFor(SKILL_MIN, SKILL_MAX, s.pe)}% - 5px)` }}
                       />
                     )}
                   </div>
@@ -213,7 +221,7 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
                     stroke="#18181b"
                     vectorEffect="non-scaling-stroke"
                     points={orderedSkills
-                      .map((s, i) => (s.pe !== null ? `${pctFor(1, 19, s.pe)},${i * ROW_H + ROW_H / 2}` : null))
+                      .map((s, i) => (s.pe !== null ? `${pctFor(SKILL_MIN, SKILL_MAX, s.pe)},${i * ROW_H + ROW_H / 2}` : null))
                       .filter(Boolean)
                       .join(" ")}
                   />
@@ -251,13 +259,13 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
                 {DOMAIN_ZONES.map((z) => (
                   <div
                     key={z.label}
-                    style={{ width: `${pctFor(40, 130, z.to) - pctFor(40, 130, z.from)}%`, backgroundColor: z.color, opacity: 0.55 }}
+                    style={{ width: `${pctFor(DOMAIN_MIN, DOMAIN_MAX, z.to) - pctFor(DOMAIN_MIN, DOMAIN_MAX, z.from)}%`, backgroundColor: z.color, opacity: 0.55 }}
                   />
                 ))}
               </div>
               <div
                 className="absolute top-0 bottom-0 border-l border-dashed border-zinc-500"
-                style={{ left: `${pctFor(40, 130, 100)}%` }}
+                style={{ left: `${pctFor(DOMAIN_MIN, DOMAIN_MAX, 100)}%` }}
               />
             </div>
           </div>
@@ -275,7 +283,7 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
                 {d.pt !== null && (
                   <div
                     className="absolute rounded-full bg-zinc-900 border-2 border-white shadow"
-                    style={{ width: 10, height: 10, top: ROW_H / 2 - 5, left: `calc(${pctFor(40, 130, d.pt)}% - 5px)` }}
+                    style={{ width: 10, height: 10, top: ROW_H / 2 - 5, left: `calc(${pctFor(DOMAIN_MIN, DOMAIN_MAX, d.pt)}% - 5px)` }}
                   />
                 )}
               </div>
@@ -298,7 +306,7 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
                 stroke="#18181b"
                 vectorEffect="non-scaling-stroke"
                 points={domains
-                  .map((d, i) => (d.pt !== null ? `${pctFor(40, 130, d.pt)},${i * ROW_H + ROW_H / 2}` : null))
+                  .map((d, i) => (d.pt !== null ? `${pctFor(DOMAIN_MIN, DOMAIN_MAX, d.pt)},${i * ROW_H + ROW_H / 2}` : null))
                   .filter(Boolean)
                   .join(" ")}
               />
