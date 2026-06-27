@@ -264,3 +264,62 @@ export function sumToStandardScore(formId: FormId, domain: DomainCode, sum: numb
 
   return { standard: null, sum, domain, bandKey, tableUsed: indices.sourcePage, note: "Sin datos para esta combinación." };
 }
+
+// --- Interpretación cualitativa y agrupación visual para el reporte de perfil ---
+
+/** Categoría visual (no necesariamente la misma composición que el índice numérico: Motor se agrupa bajo "Práctico" solo para mostrar el perfil, igual que en los reportes oficiales). */
+export type VisualCategory = "CON" | "SOC" | "PRA";
+
+export const VISUAL_CATEGORY_LABELS: Record<VisualCategory, string> = {
+  CON: "Conceptual",
+  SOC: "Social",
+  PRA: "Práctico",
+};
+
+const AREA_VISUAL_CATEGORY: Record<AreaCode, VisualCategory> = {
+  Com: "CON",
+  FA: "CON",
+  SD: "CON",
+  LS: "SOC",
+  Soc: "SOC",
+  CU: "PRA",
+  HL: "PRA",
+  SL: "PRA",
+  HS: "PRA",
+  SC: "PRA",
+  WK: "PRA",
+  MO: "PRA",
+};
+
+export function areaVisualCategory(area: AreaCode): VisualCategory {
+  return AREA_VISUAL_CATEGORY[area];
+}
+
+/** Interpretación cualitativa del puntaje escalar por área (media=10, DE=3). */
+export function interpretScaled(value: number | null): string {
+  if (value === null) return "—";
+  if (value <= 2) return "Muy bajo";
+  if (value <= 4) return "Bajo";
+  if (value <= 6) return "Promedio Bajo";
+  if (value <= 13) return "Promedio";
+  if (value <= 15) return "Promedio Alto";
+  if (value <= 17) return "Alto";
+  return "Muy alto";
+}
+
+/** Interpretación cualitativa del puntaje típico por índice (media=100, DE=15). */
+export function interpretStandard(value: number | null): string {
+  if (value === null) return "—";
+  if (value <= 69) return "Muy bajo";
+  if (value <= 79) return "Bajo";
+  if (value <= 89) return "Promedio Bajo";
+  if (value <= 109) return "Promedio";
+  if (value <= 119) return "Promedio Alto";
+  if (value <= 129) return "Alto";
+  return "Muy alto";
+}
+
+/** Convierte una llave de banda ("5:0-5:11") al formato de despliegue "5:0 a 5:11". */
+export function formatBandKey(bandKey: string): string {
+  return bandKey.replace("-", " a ");
+}

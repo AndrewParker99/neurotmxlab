@@ -1,13 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   AREA_LABELS,
   DOMAIN_LABELS,
   FORM_LABELS,
+  areaVisualCategory,
   areasForBand,
   areasForDomain,
   formMeta,
+  formatBandKey,
+  interpretScaled,
+  interpretStandard,
   monthsToBandKey,
   rawToScaled,
   sumToStandardScore,
@@ -15,17 +19,26 @@ import {
   type DomainCode,
   type FormId,
 } from "@/lib/norms";
-import ProfileChart from "@/components/ProfileChart";
-import IndicesChart from "@/components/IndicesChart";
+import ReportProfile, { type DomainRow, type SkillRow } from "@/components/ReportProfile";
 
 const DOMAINS: DomainCode[] = ["CON", "SO", "PR", "GAC"];
 
+function todayLabel() {
+  const d = new Date();
+  return d.toLocaleDateString("es-MX");
+}
+
 export default function Home() {
   const [name, setName] = useState("");
+  const [professional, setProfessional] = useState("");
+  const [dateStr, setDateStr] = useState(() => new Date().toISOString().slice(0, 10));
   const [years, setYears] = useState(0);
   const [months, setMonths] = useState(6);
+  const [days, setDays] = useState(0);
   const [formId, setFormId] = useState<FormId>("parent_0_5");
   const [raw, setRaw] = useState<Partial<Record<AreaCode, string>>>({});
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const totalMonths = years * 12 + months;
   const bandKey = monthsToBandKey(formId, totalMonths);
@@ -35,9 +48,9 @@ export default function Home() {
   const results = useMemo(() => {
     return areas.map((area) => {
       const rawVal = parseInt(raw[area] ?? "", 10);
-      if (isNaN(rawVal)) return { area, scaled: null, note: undefined as string | undefined, tableUsed: "" };
+      if (isNaN(rawVal)) return { area, raw: null as number | null, scaled: null, note: undefined as string | undefined, tableUsed: "" };
       const r = rawToScaled(formId, area, rawVal, totalMonths);
-      return { area, scaled: r.scaled, note: r.note, tableUsed: r.tableUsed };
+      return { area, raw: rawVal, scaled: r.scaled, note: r.note, tableUsed: r.tableUsed };
     });
   }, [formId, areas, raw, totalMonths]);
 
@@ -52,7 +65,7 @@ export default function Home() {
       const domainAreaList = areasForDomain(formId, domain, bandKey);
       const values = domainAreaList.map((a) => scaledByArea[a]);
       if (domainAreaList.length === 0 || values.some((v) => v === undefined)) {
-        return { domain, standard: null, note: undefined as string | undefined, tableUsed: "", areasUsed: domainAreaList };
+        return { domain, standard: null, note: undefined as string | undefined, tableUsed: "", areasUsed: domainAreaList, sum: null as number | null };
       }
       const sum = (values as number[]).reduce((acc, v) => acc + v, 0);
       const r = sumToStandardScore(formId, domain, sum, totalMonths);
@@ -60,33 +73,68 @@ export default function Home() {
     });
   }, [formId, bandKey, scaledByArea, totalMonths]);
 
-  const chartPoints = results.map((r) => ({
-    label: AREA_LABELS[r.area],
+  const skillRows: SkillRow[] = results.map((r) => ({
     code: r.area,
-    scaled: r.scaled,
+    label: AREA_LABELS[r.area],
+    category: areaVisualCategory(r.area),
+    pd: r.raw,
+    pe: r.scaled,
+    interpretation: interpretScaled(r.scaled),
   }));
 
-  const indexChartPoints = indexResults.map((r) => ({
-    label: DOMAIN_LABELS[r.domain],
-    code: r.domain,
-    standard: r.standard,
-  }));
+  const domainRows: DomainRow[] = indexResults
+    .filter((r) => r.domain !== "GAC")
+    .map((r) => ({
+      code: r.domain,
+      label: DOMAIN_LABELS[r.domain],
+      spe: r.sum,
+      pt: r.standard,
+      interpretation: interpretStandard(r.standard),
+    }));
+  const gacResult = indexResults.find((r) => r.domain === "GAC");
+  if (gacResult) {
+    domainRows.push({
+      code: "CAG",
+      label: DOMAIN_LABELS.GAC,
+      spe: gacResult.sum,
+      pt: gacResult.standard,
+      interpretation: interpretStandard(gacResult.standard),
+    });
+  }
 
   const tableUsed = results.find((r) => r.tableUsed)?.tableUsed || `${meta.form} — Ages ${bandKey}`;
   const indexTableUsed = indexResults.find((r) => r.tableUsed)?.tableUsed;
 
+  const ageLabel = `${years} años, ${months} meses, ${days} días`;
+  const groupLabel = formatBandKey(bandKey);
+  const dateLabel = dateStr
+    ? new Date(dateStr + "T00:00:00").toLocaleDateString("es-MX")
+    : todayLabel();
+
+  async function handleDownloadPng() {
+    if (!reportRef.current) return;
+    setDownloading(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(reportRef.current, { pixelRatio: 2, backgroundColor: "#ffffff" });
+      const link = document.createElement("a");
+      link.download = `ABAS3_Perfil_${(name || "paciente").replace(/\s+/g, "_")}.png`;
+      link.href = dataUrl;
+      link.click();
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
+      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
         <div className="mb-6">
-          <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 inline-block px-2 py-1 rounded">
-            Padres/Cuidador (0-5): Tablas A.1+A.2 completas · Padres Escolar (5-21): Tabla A.4 en progreso
-          </p>
-          <h1 className="text-2xl font-bold text-zinc-900 mt-3">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
           <p className="text-zinc-500 text-sm mt-1">{meta.form}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Nombre del paciente</label>
             <input
@@ -94,6 +142,15 @@ export default function Home() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nombre completo"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Profesional</label>
+            <input
+              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
+              value={professional}
+              onChange={(e) => setProfessional(e.target.value)}
+              placeholder="Nombre del profesional"
             />
           </div>
           <div>
@@ -110,26 +167,48 @@ export default function Home() {
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Fecha</label>
+            <input
+              type="date"
+              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
+              value={dateStr}
+              onChange={(e) => setDateStr(e.target.value)}
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Edad — años</label>
             <input
               type="number"
               min={0}
-              max={21}
+              max={89}
               className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
               value={years}
               onChange={(e) => setYears(parseInt(e.target.value || "0", 10))}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Edad — meses</label>
-            <input
-              type="number"
-              min={0}
-              max={11}
-              className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
-              value={months}
-              onChange={(e) => setMonths(parseInt(e.target.value || "0", 10))}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Edad — meses</label>
+              <input
+                type="number"
+                min={0}
+                max={11}
+                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
+                value={months}
+                onChange={(e) => setMonths(parseInt(e.target.value || "0", 10))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Edad — días</label>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm bg-white text-zinc-900"
+                value={days}
+                onChange={(e) => setDays(parseInt(e.target.value || "0", 10))}
+              />
+            </div>
           </div>
         </div>
 
@@ -155,12 +234,27 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="border-t border-zinc-200 pt-6">
-          <ProfileChart points={chartPoints} title="Perfil por área (puntaje escalar, media=10, DE=3)" />
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={handleDownloadPng}
+            disabled={downloading}
+            className="bg-sky-700 hover:bg-sky-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md"
+          >
+            {downloading ? "Generando…" : "Descargar PNG"}
+          </button>
         </div>
 
-        <div className="border-t border-zinc-200 pt-6 mt-6">
-          <IndicesChart points={indexChartPoints} title="Índices (puntaje típico, media=100, DE=15)" />
+        <div className="border-t border-zinc-200 pt-6">
+          <ReportProfile
+            ref={reportRef}
+            patientName={name}
+            professional={professional}
+            ageLabel={ageLabel}
+            groupLabel={groupLabel}
+            dateLabel={dateLabel}
+            skills={skillRows}
+            domains={domainRows}
+          />
         </div>
 
         <div className="mt-6 text-xs text-zinc-500 bg-zinc-50 border border-zinc-200 rounded-md p-3 space-y-2">
@@ -176,7 +270,7 @@ export default function Home() {
           </div>
           {indexTableUsed && (
             <div>
-              <strong>Tabla A.2 utilizada:</strong> {indexTableUsed}
+              <strong>Tabla de índices utilizada:</strong> {indexTableUsed}
             </div>
           )}
           {indexResults.some((r) => r.note) && (
