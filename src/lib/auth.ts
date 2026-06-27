@@ -2,15 +2,12 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-
-const APP_PASSWORD = "Romanovich88_";
-const SESSION_COOKIE = "abas_session";
-const SESSION_VALUE = "granted-9f3a1c7e";
+import { APP_PASSWORD, SESSION_COOKIE, SESSION_VALUE } from "@/lib/session";
 
 export async function login(formData: FormData) {
   const password = formData.get("password");
   if (password !== APP_PASSWORD) {
-    redirect("/login?error=1");
+    redirect("/?error=1");
   }
   const store = await cookies();
   store.set(SESSION_COOKIE, SESSION_VALUE, {
@@ -26,5 +23,5 @@ export async function login(formData: FormData) {
 export async function logout() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
-  redirect("/login");
+  redirect("/");
 }
