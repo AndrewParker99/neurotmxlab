@@ -141,23 +141,24 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
       </div>
 
       <div className="border border-t-0 border-zinc-300 rounded-b-md mb-6 overflow-hidden">
+        <div className="flex border-b border-zinc-200 bg-zinc-50 text-[11px] font-semibold text-zinc-600">
+          <div style={{ width: 22 }} />
+          <div style={{ width: 190 }} className="px-2 py-1.5">Habilidad</div>
+          <div style={{ width: 40 }} className="px-1 py-1.5 text-center">PD</div>
+          <div style={{ width: 36 }} className="px-1 py-1.5 text-center">PE</div>
+          <div style={{ width: 110 }} className="px-1 py-1.5">Intepretación</div>
+          <div className="flex-1 flex">
+            {SKILL_TICKS.map((t) => (
+              <div key={t} className="flex-1 text-center text-[9px] py-1.5">
+                {String(t).padStart(2, "0")}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="flex">
           <CategoryRail counts={railCounts} />
           <div className="flex-1">
-            <div className="flex border-b border-zinc-200 bg-zinc-50 text-[11px] font-semibold text-zinc-600">
-              <div style={{ width: 190 }} className="px-2 py-1.5">Habilidad</div>
-              <div style={{ width: 40 }} className="px-1 py-1.5 text-center">PD</div>
-              <div style={{ width: 36 }} className="px-1 py-1.5 text-center">PE</div>
-              <div style={{ width: 110 }} className="px-1 py-1.5">Intepretación</div>
-              <div className="flex-1 flex">
-                {SKILL_TICKS.map((t) => (
-                  <div key={t} className="flex-1 text-center text-[9px] py-1.5">
-                    {String(t).padStart(2, "0")}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="relative">
               <div className="absolute inset-0 flex pointer-events-none">
                 <div style={{ width: 190 }} />
