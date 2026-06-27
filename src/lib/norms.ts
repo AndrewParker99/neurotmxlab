@@ -6,6 +6,7 @@ import teacher2_5 from "@/data/norms/teacher_2_5.json";
 import teacher2_5Indices from "@/data/norms/teacher_2_5_indices.json";
 import teacher5_21 from "@/data/norms/teacher_5_21.json";
 import teacher5_21Indices from "@/data/norms/teacher_5_21_indices.json";
+import adultSelf from "@/data/norms/adult_self.json";
 
 export type AreaCode = "Com" | "CU" | "FA" | "HL" | "HS" | "LS" | "SC" | "SD" | "Soc" | "MO" | "WK" | "SL";
 
@@ -42,13 +43,14 @@ interface IndicesFile {
   ageBands: Record<string, { verified?: boolean; ss: number[] } & Record<string, string[] | number[] | boolean | undefined>>;
 }
 
-export type FormId = "parent_0_5" | "parent_5_21" | "teacher_2_5" | "teacher_5_21";
+export type FormId = "parent_0_5" | "parent_5_21" | "teacher_2_5" | "teacher_5_21" | "adult_self";
 
 export const FORM_LABELS: Record<FormId, string> = {
   parent_0_5: "Padre/Madre/Cuidador principal (0-5 años)",
   parent_5_21: "Padre/Madre (Escolar, 5-21 años)",
   teacher_2_5: "Maestro/Cuidador diurno (2-5 años)",
   teacher_5_21: "Maestro Escolar (5-21 años)",
+  adult_self: "Adulto — Autoinforme (16-89 años)",
 };
 
 const NORMS_BY_FORM: Record<FormId, NormsFile> = {
@@ -56,6 +58,7 @@ const NORMS_BY_FORM: Record<FormId, NormsFile> = {
   parent_5_21: parent5_21 as unknown as NormsFile,
   teacher_2_5: teacher2_5 as unknown as NormsFile,
   teacher_5_21: teacher5_21 as unknown as NormsFile,
+  adult_self: adultSelf as unknown as NormsFile,
 };
 
 const INDICES_BY_FORM: Partial<Record<FormId, IndicesFile>> = {
@@ -145,7 +148,8 @@ export function rawToScaled(
   }
 
   const column = band[area]!;
-  for (let ss = 1; ss <= 19; ss++) {
+  const maxScaled = column.length;
+  for (let ss = 1; ss <= maxScaled; ss++) {
     const range = parseRange(column[ss - 1]);
     if (range && raw >= range.min && raw <= range.max) {
       return { scaled: ss, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}` };
@@ -156,7 +160,7 @@ export function rawToScaled(
   const lastDefined = column.length - 1 - [...column].reverse().findIndex((c) => parseRange(c));
   const lastRange = parseRange(column[lastDefined]);
   if (lastRange && raw > lastRange.max) {
-    return { scaled: 19, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}`, note: "Por encima del techo tabulado, asignado 19." };
+    return { scaled: maxScaled, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}`, note: `Por encima del techo tabulado, asignado ${maxScaled}.` };
   }
   if (firstDefined >= 0) {
     return { scaled: firstDefined + 1, raw, area, bandKey, tableUsed: `${norms.form} — ${norms.sourcePage} — Ages ${bandKey}`, note: "Por debajo del rango tabulado, asignado el escalar mínimo disponible." };

@@ -106,7 +106,6 @@ export default function Home() {
               {Object.entries(FORM_LABELS).map(([id, label]) => (
                 <option key={id} value={id}>{label}</option>
               ))}
-              <option disabled>Adulto — Autoinforme (pendiente de digitalizar)</option>
               <option disabled>Adulto — Otro informante (pendiente de digitalizar)</option>
             </select>
           </div>
