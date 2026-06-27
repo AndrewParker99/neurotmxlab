@@ -132,7 +132,7 @@ export default function Home() {
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
+            <h1 className="text-2xl font-bold text-zinc-900">Contenido con fines académicos sin comercialización</h1>
             <p className="text-zinc-500 text-sm mt-1">{meta.form}</p>
           </div>
           <form action={logout}>
