@@ -20,6 +20,7 @@ import {
   type FormId,
 } from "@/lib/norms";
 import ReportProfile, { type DomainRow, type SkillRow } from "@/components/ReportProfile";
+import { logout } from "@/lib/auth";
 
 const DOMAINS: DomainCode[] = ["CON", "SO", "PR", "GAC"];
 
@@ -129,9 +130,16 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-zinc-900">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
-          <p className="text-zinc-500 text-sm mt-1">{meta.form}</p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900">ABAS-3 · Captura y perfil de conducta adaptativa</h1>
+            <p className="text-zinc-500 text-sm mt-1">{meta.form}</p>
+          </div>
+          <form action={logout}>
+            <button type="submit" className="text-sm text-zinc-500 hover:text-zinc-800 underline">
+              Cerrar sesión
+            </button>
+          </form>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
