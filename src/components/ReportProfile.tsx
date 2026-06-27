@@ -34,23 +34,19 @@ interface ReportProfileProps {
 const ROW_H = 32;
 
 const SKILL_ZONES = [
-  { label: "Muy bajo", from: 1, to: 2, color: "#cfe0f3" },
-  { label: "Bajo", from: 2, to: 4, color: "#bcd6ee" },
-  { label: "Promedio Bajo", from: 4, to: 6, color: "#cfe8d6" },
-  { label: "Promedio", from: 6, to: 13, color: "#a9d8b8" },
-  { label: "Promedio Alto", from: 13, to: 15, color: "#eee4bb" },
-  { label: "Alto", from: 15, to: 17, color: "#eedba0" },
-  { label: "Muy alto", from: 17, to: 19, color: "#e8c474" },
+  { label: "Muy bajo / Bajo", from: 1, to: 4, color: "#f5d4a8" },
+  { label: "Promedio Bajo", from: 4, to: 6, color: "#c7e6cf" },
+  { label: "Promedio", from: 6, to: 13, color: "#6fb98a" },
+  { label: "Promedio Alto", from: 13, to: 15, color: "#c7e6cf" },
+  { label: "Alto / Muy alto", from: 15, to: 19, color: "#f5d4a8" },
 ];
 
 const DOMAIN_ZONES = [
-  { label: "Muy bajo", from: 40, to: 69, color: "#cfe0f3" },
-  { label: "Bajo", from: 69, to: 79, color: "#bcd6ee" },
-  { label: "Promedio Bajo", from: 79, to: 89, color: "#cfe8d6" },
-  { label: "Promedio", from: 89, to: 109, color: "#a9d8b8" },
-  { label: "Promedio Alto", from: 109, to: 119, color: "#eee4bb" },
-  { label: "Alto", from: 119, to: 129, color: "#eedba0" },
-  { label: "Muy alto", from: 129, to: 130, color: "#e8c474" },
+  { label: "Muy bajo / Bajo", from: 40, to: 79, color: "#f5d4a8" },
+  { label: "Promedio Bajo", from: 79, to: 89, color: "#c7e6cf" },
+  { label: "Promedio", from: 89, to: 109, color: "#6fb98a" },
+  { label: "Promedio Alto", from: 109, to: 119, color: "#c7e6cf" },
+  { label: "Alto / Muy alto", from: 119, to: 130, color: "#f5d4a8" },
 ];
 
 const SKILL_TICKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
