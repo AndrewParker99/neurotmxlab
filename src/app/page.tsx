@@ -16,8 +16,7 @@ export default async function Page({
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4">
         <div className="w-full max-w-sm bg-white border border-zinc-200 rounded-xl shadow-sm p-8">
-          <h1 className="text-lg font-bold text-zinc-900 mb-1">ABAS-3</h1>
-          <p className="text-sm text-zinc-500 mb-6">Contenido con fines académicos sin comercialización</p>
+          <h1 className="text-sm text-zinc-500 mb-6">Contenido con fines académicos sin comercialización</h1>
 
           <form action={login} className="space-y-4">
             <div>

@@ -314,6 +314,12 @@ const ReportProfile = forwardRef<HTMLDivElement, ReportProfileProps>(function Re
           </div>
         </div>
       </div>
+
+      <p className="text-[11px] text-zinc-500 mt-3">
+        Nota Pe: Puntuación escalar con media = 10 y desviación típica = 3.
+        <br />
+        Nota PT: Puntuación típica con media = 100 y desviación típica = 15.
+      </p>
     </div>
   );
 });
